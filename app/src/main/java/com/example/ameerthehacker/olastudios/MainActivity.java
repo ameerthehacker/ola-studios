@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.res.Resources;
@@ -24,6 +25,7 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -200,6 +202,12 @@ public class MainActivity extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                 }
             }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this, "Unable to connect check your internet connection", Toast.LENGTH_LONG).show();
+            }
         });
     }
     private Song getSongFromSnap(DocumentSnapshot documentSnapshot) {
@@ -239,6 +247,12 @@ public class MainActivity extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                     loadingSongs = false;
                 }
+            }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this, "Unable to connect check your internet connection", Toast.LENGTH_LONG).show();
             }
         });
     }
