@@ -47,6 +47,18 @@ public class Song {
     public String getCoverImage() {
         return coverImage;
     }
+    public String getArtistsString() {
+        String artists = "";
+        for(int i = 0; i < this.artists.size(); i++) {
+            if(i == this.artists.size() - 1) {
+                artists += this.artists.get(i);
+            }
+            else {
+                artists += this.artists.get(i) + ", ";
+            }
+        }
+        return artists;
+    }
 
     public void setCoverImage(String coverImage) {
         this.coverImage = coverImage;
