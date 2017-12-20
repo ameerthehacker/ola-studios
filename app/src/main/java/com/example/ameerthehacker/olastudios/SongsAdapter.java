@@ -340,7 +340,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
             // Say that the song was downloaed
             Toast.makeText(mContext, "Download complete", Toast.LENGTH_LONG).show();
             // Store in the history table
-            history.insert("Downloaded " + song.getName());
+            history.insert("Downloaded song " + song.getName());
         }
     }
 
