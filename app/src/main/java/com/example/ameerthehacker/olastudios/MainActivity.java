@@ -10,9 +10,11 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -26,6 +28,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.w3c.dom.Document;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private int perPage = 5;
     private boolean loadingSongs = false;
     private DocumentSnapshot lastDocument;
+    private SearchView search;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         initCollapsingToolbar();
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        search = (SearchView) findViewById(R.id.search);
 
         songList = new ArrayList<>();
         adapter = new SongsAdapter(this, songList);
@@ -78,6 +84,27 @@ public class MainActivity extends AppCompatActivity {
                         loadingSongs = true;
                     }
                 }
+            }
+        });
+        search.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                lastDocument = null;
+                songList.clear();
+                prepareSongs();
+                return false;
+            }
+        });
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                searchSongs(s);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
             }
         });
     }
@@ -117,8 +144,37 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Adding few albums for testing
      */
+    private void searchSongs(String term) {
+        Query songsQuery = FirebaseFirestore.getInstance()
+                .collection("songs")
+                .whereGreaterThanOrEqualTo("name", term);
+        songList.clear();
+        loadingSongs = true;
+        songsQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot documentSnapshots) {
+                if(documentSnapshots.size() != 0) {
+                    for(DocumentSnapshot documentSnapshot: documentSnapshots) {
+                        Song newSong = getSongFromSnap(documentSnapshot);
+                        songList.add(newSong);
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+    private Song getSongFromSnap(DocumentSnapshot documentSnapshot) {
+        String name = documentSnapshot.getString("name");
+        String url = documentSnapshot.getString("url");
+        String coverImage = documentSnapshot.getString("coverImage");
+        ArrayList<String> artists = (ArrayList<String>)documentSnapshot.get("artists");
+        Song newSong = new Song(name, url, artists, coverImage);
+
+        return newSong;
+    }
     private void prepareSongs() {
         Query songsQuery = null;
+        loadingSongs = true;
 
         if(lastDocument == null) {
             songsQuery = FirebaseFirestore.getInstance()
@@ -137,11 +193,7 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(QuerySnapshot documentSnapshots) {
                 if(documentSnapshots.size() != 0) {
                     for(DocumentSnapshot documentSnapshot: documentSnapshots) {
-                        String name = documentSnapshot.getString("name");
-                        String url = documentSnapshot.getString("url");
-                        String coverImage = documentSnapshot.getString("coverImage");
-                        ArrayList<String> artists = (ArrayList<String>)documentSnapshot.get("artists");
-                        Song newSong = new Song(name, url, artists, coverImage);
+                        Song newSong = getSongFromSnap(documentSnapshot);
                         songList.add(newSong);
                         lastDocument = documentSnapshot;
                     }
