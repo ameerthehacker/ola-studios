@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -22,6 +23,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
@@ -32,7 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private SongsAdapter adapter;
     private List<Song> songList;
-    private CollectionReference songsRef = FirebaseFirestore.getInstance().collection("songs");
+    // Pagination variables
+    private int perPage = 5;
+    private boolean loadingSongs = false;
+    private DocumentSnapshot lastDocument;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +66,20 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if(!recyclerView.canScrollVertically(1)) {
+                    if(!loadingSongs) {
+                        prepareSongs();
+                        loadingSongs = true;
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -99,8 +118,21 @@ public class MainActivity extends AppCompatActivity {
      * Adding few albums for testing
      */
     private void prepareSongs() {
+        Query songsQuery = null;
 
-        songsRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        if(lastDocument == null) {
+            songsQuery = FirebaseFirestore.getInstance()
+                    .collection("songs")
+                    .limit(perPage);
+        }
+        else {
+            songsQuery = FirebaseFirestore.getInstance()
+                    .collection("songs")
+                    .startAfter(lastDocument)
+                    .limit(perPage);
+        }
+
+        songsQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot documentSnapshots) {
                 if(documentSnapshots.size() != 0) {
@@ -111,8 +143,10 @@ public class MainActivity extends AppCompatActivity {
                         ArrayList<String> artists = (ArrayList<String>)documentSnapshot.get("artists");
                         Song newSong = new Song(name, url, artists, coverImage);
                         songList.add(newSong);
+                        lastDocument = documentSnapshot;
                     }
                     adapter.notifyDataSetChanged();
+                    loadingSongs = false;
                 }
             }
         });
