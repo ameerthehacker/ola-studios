@@ -1,5 +1,10 @@
 package com.example.ameerthehacker.olastudios;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.res.Resources;
@@ -13,6 +18,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -30,6 +36,12 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import org.w3c.dom.Document;
 
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean loadingSongs = false;
     private DocumentSnapshot lastDocument;
     private SearchView search;
+    public static final int progress_bar = 0;
+    private ProgressDialog pDialog;
+    private Button btnHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         search = (SearchView) findViewById(R.id.search);
+        btnHistory = (Button)findViewById(R.id.btnHistory);
 
         songList = new ArrayList<>();
         adapter = new SongsAdapter(this, songList);
@@ -86,6 +102,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        btnHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, HistoryActivity.class));
+            }
+        });
         search.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
@@ -104,9 +126,26 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String s) {
-                return false;
+                searchSongs(s);
+                return true;
             }
         });
+    }
+
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case progress_bar:
+                pDialog = new ProgressDialog(this);
+                pDialog.setMessage("Downloading file. Please wait...");
+                pDialog.setIndeterminate(false);
+                pDialog.setMax(100);
+                pDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                pDialog.setCancelable(true);
+                pDialog.show();
+                return pDialog;
+            default:
+                return null;
+        }
     }
 
     /**
@@ -249,4 +288,8 @@ public class MainActivity extends AppCompatActivity {
         Resources r = getResources();
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
     }
+
+
 }
+
+
