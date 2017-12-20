@@ -7,8 +7,13 @@ package com.example.ameerthehacker.olastudios;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -23,10 +28,32 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -41,10 +68,20 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
     private Context mContext;
     private List<Song> songList;
     private History history;
+    private String songUrl;
+    private SimpleExoPlayer player;
+    private BandwidthMeter bandwidthMeter;
+    private ExtractorsFactory extractorsFactory;
+    private TrackSelection.Factory trackSelectionFactory;
+    private TrackSelector trackSelector;
+    private DefaultBandwidthMeter defaultBandwidthMeter;
+    private DataSource.Factory dataSourceFactory;
+    private MediaSource mediaSource;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView title, count;
         public ImageView thumbnail, overflow;
+        public ImageView control;
 
         public MyViewHolder(View view) {
             super(view);
@@ -52,7 +89,9 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
             count = (TextView) view.findViewById(R.id.count);
             thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
             overflow = (ImageView) view.findViewById(R.id.overflow);
+            control = (ImageView) view.findViewById(R.id.btnControl);
             history = new History(mContext);
+
         }
     }
 
@@ -60,6 +99,16 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
     public SongsAdapter(Context mContext, List<Song> songList) {
         this.mContext = mContext;
         this.songList = songList;
+
+        bandwidthMeter = new DefaultBandwidthMeter();
+        extractorsFactory = new DefaultExtractorsFactory();
+
+        trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+
+        trackSelector = new DefaultTrackSelector(trackSelectionFactory);
+        defaultBandwidthMeter = new DefaultBandwidthMeter();
+        dataSourceFactory = new DefaultDataSourceFactory(mContext,
+                Util.getUserAgent(mContext, "mediaPlayerSample"), defaultBandwidthMeter);
     }
 
     @Override
@@ -72,9 +121,10 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, final int position) {
-        Song song = songList.get(position);
+        final Song song = songList.get(position);
         holder.title.setText(song.getName());
         holder.count.setText(song.getArtistsString());
+        final boolean isPlaying = false;
 
         // loading album cover using Glide library
         Glide.with(mContext).load(song.getCoverImage()).into(holder.thumbnail);
@@ -85,6 +135,89 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
                 showPopupMenu(holder.overflow, position);
             }
         });
+        // Play or pause the song
+        songUrl = song.getUrl();
+        holder.thumbnail.setOnClickListener(new View.OnClickListener() {
+            private boolean isPlaying = false;
+            private MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(songUrl), dataSourceFactory, extractorsFactory, null, null);
+
+            private SimpleExoPlayer player = ExoPlayerFactory.newSimpleInstance(mContext, trackSelector);
+
+            @Override
+            public void onClick(View view) {
+
+
+                if(!isPlaying) {
+                    player.prepare(mediaSource);
+                    player.setPlayWhenReady(true);
+                    history.insert("Played song " + song.getName());
+
+                }
+                else {
+                    player.setPlayWhenReady(false);
+                }
+
+                player.addListener(new ExoPlayer.EventListener() {
+                    @Override
+                    public void onTimelineChanged(Timeline timeline, Object manifest) {
+
+                    }
+
+                    @Override
+                    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+                    }
+
+                    @Override
+                    public void onLoadingChanged(boolean isLoading) {
+
+                    }
+
+                    @Override
+                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                        if(playWhenReady && playbackState == ExoPlayer.STATE_READY) {
+                            holder.control.setImageResource(R.drawable.pause);
+                            isPlaying = true;
+                        }
+                        if(!playWhenReady) {
+                            holder.control.setImageResource(R.drawable.play);
+                            isPlaying = false;
+                        }
+                    }
+
+                    @Override
+                    public void onRepeatModeChanged(int repeatMode) {
+
+                    }
+
+                    @Override
+                    public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+                    }
+
+                    @Override
+                    public void onPlayerError(ExoPlaybackException error) {
+
+                    }
+
+                    @Override
+                    public void onPositionDiscontinuity(int reason) {
+
+                    }
+
+                    @Override
+                    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+                    }
+
+                    @Override
+                    public void onSeekProcessed() {
+
+                    }
+                });
+            }
+        });
+
     }
 
     /**

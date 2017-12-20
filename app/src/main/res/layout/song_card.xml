@@ -44,7 +44,16 @@
                 android:paddingLeft="@dimen/card_title_padding"
                 android:paddingRight="@dimen/card_title_padding"
                 android:textSize="@dimen/artists" />
+            <ImageView
+                android:id="@+id/btnControl"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:scaleType="centerCrop"
 
+                android:src="@drawable/play"
+                />
             <ImageView
                 android:id="@+id/overflow"
                 android:layout_width="@dimen/ic_song_overflow_width"
