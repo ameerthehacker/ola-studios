@@ -197,7 +197,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
                     @Override
                     public void onPlayerError(ExoPlaybackException error) {
-
+                        Toast.makeText(mContext, "Unable to play the song check your internet connection", Toast.LENGTH_LONG).show();
                     }
 
                     @Override
