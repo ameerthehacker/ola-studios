@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -219,7 +220,6 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         });
 
     }
-
     /**
      * Showing popup menu when tapping on 3 dots
      */
@@ -247,6 +247,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         public boolean onMenuItemClick(MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.action_download:
+
                     Song song = songList.get(position);
                     String downloadUrl = song.getUrl();
                     new DownloadHandler(song).execute(downloadUrl);

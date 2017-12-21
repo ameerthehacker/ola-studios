@@ -3,9 +3,12 @@ package com.example.ameerthehacker.olastudios;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.res.Resources;
@@ -60,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int progress_bar = 0;
     private Button btnHistory;
     private ProgressDialog progressDialog;
+    private final int MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         prepareSongs();
+        // Get permission to access external storage
+        checkPermission();
 
         try {
             Glide.with(this).load(R.drawable.cover).into((ImageView) findViewById(R.id.backdrop));
@@ -134,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
             case progress_bar:
@@ -146,6 +153,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+
+                } else {
+                    // permission denied
+                    Toast.makeText(MainActivity.this, "You can't download songs without this permission", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+        }
+    }
+
+    // Check whether permissions required are granted
+    private boolean checkPermission() {
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){
+            if (this.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                return true;
+            } else {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{ android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
+                return false;
+            }
+        }
+        else {
+            return true;
+        }
+    }
     /**
      * Initializing collapsing toolbar
      * Will show and hide the toolbar title on scroll
