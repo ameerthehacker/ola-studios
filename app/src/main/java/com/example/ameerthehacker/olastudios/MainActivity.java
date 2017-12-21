@@ -58,8 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private DocumentSnapshot lastDocument;
     private SearchView search;
     public static final int progress_bar = 0;
-    private ProgressDialog pDialog;
     private Button btnHistory;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,14 +137,10 @@ public class MainActivity extends AppCompatActivity {
     protected Dialog onCreateDialog(int id) {
         switch (id) {
             case progress_bar:
-                pDialog = new ProgressDialog(this);
-                pDialog.setMessage("Downloading file. Please wait...");
-                pDialog.setIndeterminate(false);
-                pDialog.setMax(100);
-                pDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                pDialog.setCancelable(true);
-                pDialog.show();
-                return pDialog;
+                progressDialog = new ProgressDialog(this);
+                progressDialog.setMessage("Please wait...");
+                progressDialog.show();
+                return progressDialog;
             default:
                 return null;
         }
@@ -222,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
     private void prepareSongs() {
         Query songsQuery = null;
         loadingSongs = true;
+        showDialog(progress_bar);
 
         if(lastDocument == null) {
             songsQuery = FirebaseFirestore.getInstance()
@@ -247,11 +244,13 @@ public class MainActivity extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                     loadingSongs = false;
                 }
+                progressDialog.dismiss();
             }
         })
         .addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                progressDialog.dismiss();
                 Toast.makeText(MainActivity.this, "Unable to connect check your internet connection", Toast.LENGTH_LONG).show();
             }
         });
