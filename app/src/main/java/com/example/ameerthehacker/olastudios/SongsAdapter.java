@@ -84,6 +84,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         public TextView title, count;
         public ImageView thumbnail, overflow;
         public ImageView control;
+        private Resources res = mContext.getResources();
 
         public MyViewHolder(View view) {
             super(view);
@@ -199,7 +200,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
                     @Override
                     public void onPlayerError(ExoPlaybackException error) {
-                        Toast.makeText(mContext, "Unable to play the song check your internet connection", Toast.LENGTH_LONG).show();
+                        Toast.makeText(mContext, mContext.getResources().getString(R.string.stream_error), Toast.LENGTH_LONG).show();
                     }
 
                     @Override
@@ -268,7 +269,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
         private Song song;
         private ProgressDialog progressDialog;
-        private Resources res = mContext.getResources();
+        Resources res = mContext.getResources();
 
         DownloadHandler(Song song) {
             this.song = song;

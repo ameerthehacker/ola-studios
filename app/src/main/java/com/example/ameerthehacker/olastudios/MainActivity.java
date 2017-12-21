@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnHistory;
     private ProgressDialog progressDialog;
     private final int MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 1;
-    private Resources res = getResources();
+    private Resources res;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         search = (SearchView) findViewById(R.id.search);
         btnHistory = (Button)findViewById(R.id.btnHistory);
+        res = getResources();
 
         songList = new ArrayList<>();
         adapter = new SongsAdapter(this, songList);
