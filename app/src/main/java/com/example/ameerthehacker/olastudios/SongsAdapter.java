@@ -293,9 +293,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
          * */
         @Override
         protected String doInBackground(String... f_url) {
-            String TAG = "debug";
             try{
-                Log.v(TAG, "downloading data");
 
                 URL url  = new URL(f_url[0]);
                 URLConnection connection = url.openConnection();
@@ -327,8 +325,8 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
                 fos.close();
 
             }catch(Exception e){
-                progressDialog.dismiss();
-                Toast.makeText(mContext, "Unable to download song check your internet connection", Toast.LENGTH_LONG).show();
+                // Publish error
+                publishProgress(Integer.toString(-1));
                 e.printStackTrace();
             }
 
@@ -336,7 +334,14 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         }
 
         protected void onProgressUpdate(String... progress) {
-            progressDialog.setProgress(Integer.parseInt(progress[0]));
+            int prog = Integer.parseInt(progress[0]);
+            if(prog == -1) {
+                Toast.makeText(mContext, "Unable to download song", Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+            }
+            else {
+                progressDialog.setProgress(prog);
+            }
         }
 
         /**
