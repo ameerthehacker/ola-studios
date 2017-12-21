@@ -5,6 +5,7 @@ package com.example.ameerthehacker.olastudios;
  */
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -76,7 +77,6 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
     private TrackSelector trackSelector;
     private DefaultBandwidthMeter defaultBandwidthMeter;
     private DataSource.Factory dataSourceFactory;
-    private MediaSource mediaSource;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView title, count;
@@ -265,6 +265,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
     class DownloadHandler extends AsyncTask<String, String, String> {
 
         private Song song;
+        private ProgressDialog progressDialog;
 
         DownloadHandler(Song song) {
             this.song = song;
@@ -276,7 +277,14 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            Toast.makeText(mContext, "Downloading the song....", Toast.LENGTH_LONG).show();
+            progressDialog = new ProgressDialog(mContext);
+            progressDialog.setMessage("Downloading...");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.setIndeterminate(false);
+            progressDialog.setMax(100);
+            progressDialog.setCancelable(true);
+            progressDialog.setProgress(0);
+            progressDialog.show();
         }
 
         /**
@@ -294,7 +302,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
                 int lenghtOfFile = connection.getContentLength();
 
-                Log.v(TAG, "lenghtOfFile = "+lenghtOfFile);
+
 
                 InputStream is = url.openStream();
 
@@ -309,19 +317,17 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
                 while ((count=is.read(data)) != -1)
                 {
                     total += count;
-                    int progress_temp = (int)total*100/lenghtOfFile;
-                    if(progress_temp%10 == 0 && progress != progress_temp){
-                        progress = progress_temp;
-                        Log.v(TAG, "total = "+progress);
-                    }
+                    progress = (int)total*100/lenghtOfFile;
                     fos.write(data, 0, count);
+                    publishProgress(Integer.toString(progress));
                 }
 
                 is.close();
                 fos.close();
 
             }catch(Exception e){
-                Log.v(TAG, "exception in downloadData");
+                progressDialog.dismiss();
+                Toast.makeText(mContext, "Unable to download song check your internet connection", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
 
@@ -329,7 +335,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         }
 
         protected void onProgressUpdate(String... progress) {
-
+            progressDialog.setProgress(Integer.parseInt(progress[0]));
         }
 
         /**
@@ -338,7 +344,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         @Override
         protected void onPostExecute(String file_url) {
             // Say that the song was downloaed
-            Toast.makeText(mContext, "Download complete", Toast.LENGTH_LONG).show();
+            progressDialog.dismiss();
             // Store in the history table
             history.insert("Downloaded song " + song.getName());
         }
