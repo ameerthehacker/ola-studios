@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -267,6 +268,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
 
         private Song song;
         private ProgressDialog progressDialog;
+        private Resources res = mContext.getResources();
 
         DownloadHandler(Song song) {
             this.song = song;
@@ -279,7 +281,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         protected void onPreExecute() {
             super.onPreExecute();
             progressDialog = new ProgressDialog(mContext);
-            progressDialog.setMessage("Downloading...");
+            progressDialog.setMessage(res.getString(R.string.downloading));
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setIndeterminate(false);
             progressDialog.setMax(100);
@@ -336,7 +338,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MyViewHolder
         protected void onProgressUpdate(String... progress) {
             int prog = Integer.parseInt(progress[0]);
             if(prog == -1) {
-                Toast.makeText(mContext, "Unable to download song", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, res.getString(R.string.download_error), Toast.LENGTH_LONG).show();
                 progressDialog.dismiss();
             }
             else {

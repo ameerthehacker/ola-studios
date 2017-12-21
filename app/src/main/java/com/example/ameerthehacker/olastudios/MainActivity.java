@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnHistory;
     private ProgressDialog progressDialog;
     private final int MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 1;
+    private Resources res = getResources();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case progress_bar:
                 progressDialog = new ProgressDialog(this);
-                progressDialog.setMessage("Please wait...");
+                progressDialog.setMessage(res.getString(R.string.please_wait));
                 progressDialog.show();
                 return progressDialog;
             default:
@@ -165,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 
                 } else {
                     // permission denied
-                    Toast.makeText(MainActivity.this, "You can't download songs without this permission", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, res.getString(R.string.permission_error), Toast.LENGTH_LONG).show();
                 }
                 return;
             }
@@ -244,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         .addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(MainActivity.this, "Unable to connect check your internet connection", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, res.getString(R.string.internet_error), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -293,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception e) {
                 progressDialog.dismiss();
-                Toast.makeText(MainActivity.this, "Unable to connect check your internet connection", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, res.getString(R.string.internet_error), Toast.LENGTH_LONG).show();
             }
         });
     }
